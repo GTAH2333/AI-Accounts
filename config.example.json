@@ -1,0 +1,7 @@
+[
+  {
+    "name": "我的 DeepSeek",
+    "apiKey": "sk-你的API密钥",
+    "provider": "deepseek"
+  }
+]

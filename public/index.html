@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Accounts</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root { --bg:#f5f6f8; --surface:#fff; --border:#e2e5ea; --text:#1a1d23; --text2:#6b7280; --green:#16a34a; --red:#dc2626; --radius:10px; }
+@media(prefers-color-scheme:dark) {
+  :root { --bg:#0e1015; --surface:#16181f; --border:#262a34; --text:#e8eaed; --text2:#8b92a0; --green:#22c55e; --red:#ef4444; }
+}
+body { font-family:-apple-system,BlinkMacSystemFont,sans-serif; background:var(--bg); color:var(--text); display:flex; justify-content:center; }
+.wrap { width:100%; max-width:640px; padding:40px 24px; }
+.head-wrap { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; }
+h1 { font-size:20px; font-weight:600; }
+.stop-btn { font-size:12px; padding:5px 12px; border-radius:6px; border:1px solid var(--red); background:transparent; color:var(--red); cursor:pointer; }
+.stop-btn:hover { background:var(--red); color:#fff; }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:24px; margin-bottom:16px; }
+.head { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+.dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--green); }
+.dot.off { background:var(--red); }
+.name { font-size:16px; font-weight:600; }
+.tag { font-size:11px; padding:2px 8px; border-radius:6px; background:var(--border); color:var(--text2); font-weight:500; }
+.bals { display:flex; }
+.bal { flex:1; text-align:center; padding:24px 0; }
+.bal + .bal { border-left:1px solid var(--border); }
+.num { font-size:40px; font-weight:700; letter-spacing:-2px; }
+.cur { font-size:14px; color:var(--text2); margin-top:4px; }
+.err { color:var(--red); font-size:13px; text-align:center; padding:20px 0; }
+.foot { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); display:flex; justify-content:space-between; font-size:12px; color:var(--text2); }
+.loading { text-align:center; padding:40px; color:var(--text2); }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="head-wrap"><h1>AI Accounts</h1><button class="stop-btn" id="stopBtn">Stop Server</button></div>
+<div id="root"><div class="loading">Loading...</div></div>
+</div>
+<script>
+window.onerror = function(m,u,l) {
+  document.getElementById('root').innerHTML = '<div class="err">JS Error: ' + m + '</div>';
+};
+(async function() {
+  try {
+    var a = await (await fetch('/api/accounts')).json();
+    var r = await (await fetch('/api/refresh-all',{method:'POST'})).json();
+    var h = '';
+    for (var i=0;i<r.length;i++) {
+      var d = r[i];
+      var acc = a[i] || {};
+      h += '<div class="card">';
+      h += '<div class="head"><span class="dot' + (d.isAvailable?'':' off') + '"></span>';
+      h += '<span class="name">' + _e(d.name) + '</span>';
+      h += '<span class="tag">' + _e(d.provider) + '</span></div>';
+      if (d.error) {
+        h += '<div class="err">' + _e(d.error) + '</div>';
+      } else if (d.balances && d.balances.length) {
+        h += '<div class="bals">';
+        for (var j = 0; j < d.balances.length; j++) {
+          var bal = d.balances[j];
+          if (bal.totalBalance != null) {
+            h += '<div class="bal"><div class="num">' + Number(bal.totalBalance).toFixed(2) + '</div><div class="cur">' + _e(bal.currency || '') + '</div></div>';
+          }
+        }
+        h += '</div>';
+      } else {
+        h += '<div class="bal"><div class="num">--</div><div class="cur">No balance data</div></div>';
+      }
+      h += '<div class="foot"><span>' + _e(acc.keyPreview||'') + '</span><span>' + new Date().toLocaleString() + '</span></div>';
+      h += '</div>';
+    }
+    document.getElementById('root').innerHTML = h || '<div class="loading">No accounts.</div>';
+  } catch(e) {
+    document.getElementById('root').innerHTML = '<div class="err">' + _e(e.message) + '</div>';
+  }
+})();
+document.getElementById('stopBtn').onclick = function() {
+  if (confirm('Stop the server? The dashboard will no longer be accessible.')) {
+    fetch('/api/shutdown', { method: 'POST' }).then(function() {
+      document.getElementById('root').innerHTML = '<div style="text-align:center;padding:60px 20px;color:var(--text2);"><div style="font-size:48px;margin-bottom:16px;">&#x25A0;</div><div style="font-size:18px;font-weight:600;margin-bottom:8px;">Server Stopped</div><div style="font-size:13px;">You may close this tab.</div></div>';
+      document.getElementById('stopBtn').disabled = true;
+      document.getElementById('stopBtn').textContent = 'Stopped';
+    });
+  }
+};
+function _e(s) {
+  var d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+</script>
+</body>
+</html>
