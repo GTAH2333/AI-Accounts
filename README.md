@@ -64,13 +64,13 @@ The balance API is free and does not consume tokens.
 
 ## Project Structure
 
-`
+```
 ai-accounts/
   server.js           -- HTTP server (zero dependencies)
   public/index.html   -- Dashboard UI
   start.vbs           -- Silent launcher (Windows)
   config.example.json -- Config template
-`
+```
 
 ## License
 
