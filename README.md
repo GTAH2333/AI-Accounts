@@ -74,4 +74,4 @@ ai-accounts/
 
 ## License
 
-MIT
+Deepseek-v4
